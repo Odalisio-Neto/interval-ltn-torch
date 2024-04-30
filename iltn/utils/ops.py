@@ -9,7 +9,7 @@ def softplus(x: float, beta: float = 1.) -> float:
 def zero_with_softplus_grads(x: float, beta: float = 1.) -> float:
     def grad(dy):
         return dy * tf.sigmoid(x*beta)
-    return 0., grad
+    return tf.zeros_like(x), grad
 
 # def softplus_inverse(x: float)-> float:
 #     return tf.math.log(tf.math.exp(x) - 1.)
