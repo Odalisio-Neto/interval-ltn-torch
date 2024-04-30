@@ -1,7 +1,6 @@
 from __future__ import annotations
 import dataclasses
 import warnings
-from typing import Type
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -9,40 +8,6 @@ import tensorflow as tf
 
 from iltn.events.event import Event
 from iltn.utils.ops import softplus, softplus_inverse, zero_with_softplus_grads
-
-
-class SquaredParameter:
-    def __init__(self, initial_value: float) -> None:
-        self.logit = tf.Variable(tf.math.sqrt(initial_value+1e-9))
-
-    def eval(self) -> tf.Tensor:
-        return tf.math.square(self.logit)
-    
-    @property
-    def trainable_variables(self) -> list[tf.Variable]:
-        return [self.logit]
-
-class AbsoluteValueParameter:
-    def __init__(self, initial_value: float) -> None:
-        self.logit = tf.Variable(initial_value)
-
-    def eval(self) -> tf.Tensor:
-        return tf.math.abs(self.logit)
-    
-    @property
-    def trainable_variables(self) -> list[tf.Variable]:
-        return [self.logit]
-
-class SoftplusParameter:
-    def __init__(self, initial_value: float) -> None:
-        self.logit = tf.Variable(softplus_inverse(initial_value+1e-9))
-
-    def eval(self) -> tf.Tensor:
-        return tf.math.softplus(self.logit)
-
-    @property
-    def trainable_variables(self) -> list[tf.Variable]:
-        return [self.logit]
 
 
 class LeftInfiniteTrapzEvent(Event):
@@ -91,7 +56,7 @@ class LeftInfiniteTrapzEvent(Event):
             except:
                 return self.mf(x, smooth=smooth, beta=beta)
 
-    def mf(self, x: float | ArrayLike, smooth: bool = True, beta: float = None, true_smooth: bool = False) -> float | ArrayLike:
+    def mf(self, x: float | ArrayLike, smooth: bool = True, beta: float = None) -> float | ArrayLike:
         beta = self.beta if beta is None else beta
         if not smooth:
             res = tf.where(x<=self.c,
@@ -100,19 +65,11 @@ class LeftInfiniteTrapzEvent(Event):
                                     (x-self.d)/tf.minimum(self.c-self.d,-1e-9), # fix for crisp edge
                                     0.))
         else:
-            if not true_smooth:
-                res = tf.where(x<=self.c,
+            res = tf.where(x<=self.c,
                         1.-zero_with_softplus_grads(x-self.c, beta=beta),
                         tf.where(x<=self.d,
                                     (x-self.d)/tf.minimum(self.c-self.d,-1e-9), # fix for crisp edge
                                     zero_with_softplus_grads(self.d-x, beta=beta)))
-            else:
-                res = tf.where(x<=self.c,
-                        1.-softplus(x-self.c, beta=beta),
-                        tf.where(x<=self.d,
-                                    (x-self.d)/tf.minimum(self.c-self.d,-1e-9), # fix for crisp edge
-                                    softplus(self.d-x, beta=beta)))
-                
         return res
 
     @property
@@ -260,26 +217,18 @@ class RightInfiniteTrapzEvent(Event):
 
 class TrapzEvent(Event):
     """Finite trapezoidal event"""
-    def __init__(
-            self, 
-            label: str, 
-            params: tuple[float,float,float,float], 
-            trainable: bool = False,
-            beta: float = 1., 
-            param_type: (Type[SoftplusParameter] 
-                         | Type[SquaredParameter] 
-                         | Type[AbsoluteValueParameter]) = AbsoluteValueParameter 
-            ) -> None:
+    def __init__(self, label: str, params: tuple[float,float,float,float], trainable: bool = False,
+                 beta: float = 1.) -> None:
         super().__init__(label=label)
         for (i,param) in enumerate(params):
             if not (tf.is_tensor(param) or np.issubdtype(type(param), float)):
                 params[i] = float(param)
         self._trainable = trainable
         if trainable:
-            self.ap_param = param_type(params[0])
-            self.bp_param = param_type(params[1]-params[0])
-            self.cp_param = param_type(params[2]-params[1])
-            self.dp_param = param_type(params[3]-params[2])
+            self.ap_param = SoftplusParameter(params[0])
+            self.bp_param = SoftplusParameter(params[1]-params[0])
+            self.cp_param = SoftplusParameter(params[2]-params[1])
+            self.dp_param = SoftplusParameter(params[3]-params[2])
         else:
             self._a = params[0]
             self._b = params[1]
@@ -305,33 +254,18 @@ class TrapzEvent(Event):
     def from_model(cls: TrapzEvent, model: "tltnModel") -> None:
         pass
 
-    def mf_map_fn(self, x: float, smooth: bool = True, beta: float = None, true_smooth: bool = False) -> float:
+    def mf_map_fn(self, x: float, smooth: bool = True, beta: float = None) -> float:
         beta = self.beta if beta is None else beta
         if x<=self.a:
-            if not smooth:
-                return 0.
-            elif true_smooth:
-                return softplus(x-self.a, beta=beta)
-            else:
-                return zero_with_softplus_grads(x-self.a, beta=beta)
+            return 0. if not smooth else zero_with_softplus_grads(x-self.a, beta=beta)
         elif x <= self.b:
             return (x-self.a)/(self.b-self.a)
         elif x <= self.c:
-            if not smooth:
-                return 1. 
-            elif true_smooth:
-                return 1.-softplus(tf.maximum(self.b-x,x-self.c), beta=beta)
-            else:
-                return 1.-zero_with_softplus_grads(tf.maximum(self.b-x,x-self.c), beta=beta)
+            return 1. if not smooth else 1.-zero_with_softplus_grads(tf.maximum(self.b-x,x-self.c), beta=beta)
         elif x <= self.d:
             return (x-self.d)/(self.c-self.d)
         else:
-            if not smooth:
-                return 0.
-            elif true_smooth:
-                return softplus(self.d-x, beta=beta)
-            else:
-                return zero_with_softplus_grads(self.d-x, beta=beta)
+            return 0. if not smooth else zero_with_softplus_grads(self.d-x, beta=beta)
 
     def mf_opti(self, x: float | ArrayLike, smooth: bool = True, beta: float = None) -> float:
         """Work in progress"""
@@ -452,6 +386,17 @@ class TrapzEvent(Event):
     @property
     def d(self) -> float | tf.Tensor:
         return self._d if not self._trainable else self.ap+self.bp+self.cp+self.dp
+
+class SoftplusParameter:
+    def __init__(self, initial_value: float) -> None:
+        self.logit = tf.Variable(softplus_inverse(initial_value+1e-9))
+
+    def eval(self) -> tf.Tensor:
+        return tf.math.softplus(self.logit)
+
+    @property
+    def trainable_variables(self) -> list[tf.Variable]:
+        return [self.logit]
 
 LeftFiniteTrapezoidalEvent = RightInfiniteTrapzEvent | TrapzEvent
 RightFiniteTrapezoidalEvent = LeftInfiniteTrapzEvent | TrapzEvent

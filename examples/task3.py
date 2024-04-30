@@ -9,17 +9,15 @@ iltn.utils.plot.set_tex_style()
 # Setting
 task_name = "task3"
 trace_length = 15.
-A = iltn.events.TrapzEvent(r"$A$", [0.5,1.5,3,5], trainable=True, beta=1., 
-                           param_type=iltn.events.AbsoluteValueParameter)
-B = iltn.events.TrapzEvent(r"$B$", [5.,6.,9.,10.], trainable=False, beta=1.,
-                           param_type=iltn.events.AbsoluteValueParameter)
+A = iltn.events.TrapzEvent(r"$A$", [0.5,1.5,3,5], trainable=True, beta=1/trace_length)
+B = iltn.events.TrapzEvent(r"$B$", [5.,6.,9.,10.], trainable=False, beta=1/trace_length)
 trainable_variables = A.trainable_variables
 trapz_list = [A,B]
 
 def plot_function(name):
     fig, ax = plt.subplots(1,1,figsize=iltn.utils.plot.set_size(200., subplots=(1, 1)))
     ax.set_yticks([0.,1.])
-    iltn.utils.plot.plot_events(np.arange(0.,trace_length,0.1, dtype=np.float32), [A,B], ax)
+    iltn.utils.plot.plot_events(np.arange(0.,trace_length,0.1), [A,B], ax)
     ax.legend()
     plt.savefig(f"figs/{name}.pdf")
 
@@ -31,8 +29,8 @@ trapz_ops = utils.get_default_trapz_operators()
 trapz_rel = utils.get_default_trapz_relations(trapz_ops, ltn_ops, beta=1/trace_length)
 def constraints(training:bool = True):
     cstr1 = trapz_rel.overlaps(A, B, smooth=training)
-    cstr2 = A.mf_map_fn(3., smooth=True, true_smooth=True)
-    cstr3 = ltn_ops.Not(A.mf_map_fn(2., smooth=True, true_smooth=True))
+    cstr2 = A.mf_map_fn(3., smooth=True)
+    cstr3 = ltn_ops.Not(A.mf_map_fn(2., smooth=True))
     return ltn_ops.Forall(tf.stack([cstr1, cstr2, cstr3]))
 constraints()
 
