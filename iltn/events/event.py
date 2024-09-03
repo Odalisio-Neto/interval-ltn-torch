@@ -3,7 +3,7 @@ import abc
 
 import numpy as np
 from numpy.typing import ArrayLike
-import tensorflow as tf
+import torch
 
 class Event(abc.ABC):
     def __init__(self, label: str) -> None:
@@ -23,7 +23,7 @@ class Event(abc.ABC):
         """
         pass
 
-    @abc.abstractproperty
-    def trainable_variables(self) -> list[tf.Variable]:
+    @property
+    @abc.abstractmethod
+    def trainable_variables(self) -> list[torch.nn.Parameter]:
         pass
-

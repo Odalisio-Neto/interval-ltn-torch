@@ -1,4 +1,4 @@
-import tensorflow as tf
+import torch.nn as nn
 
 import iltn
 
@@ -8,22 +8,20 @@ class TrapezoidalModel:
     cp_index: int = 2
     dp_index: int = 3
 
-
-    def __init__(self, model: tf.keras.Model) -> None:
+    def __init__(self, model: nn.Module) -> None:
         self.model = model
 
-    def a(self, inputs:list[iltn.terms.Constant]):
+    def a(self, inputs: list[iltn.terms.Constant]):
         pass
     
-    def b(self, inputs:list[iltn.terms.Constant]):
+    def b(self, inputs: list[iltn.terms.Constant]):
         pass
 
-    def c(self, inputs:list[iltn.terms.Constant]):
+    def c(self, inputs: list[iltn.terms.Constant]):
         pass
 
-    def d(self, inputs:list[iltn.terms.Constant]):
+    def d(self, inputs: list[iltn.terms.Constant]):
         pass
 
     def embedding(self, inputs: list[iltn.terms.Constant]):
         pass
-
