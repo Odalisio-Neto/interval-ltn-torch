@@ -49,7 +49,7 @@ class Equals:
     def __init__(self, smooth: bool = True, beta: float = 1.) -> None:
         self.smooth = smooth
         self.beta = beta
-        self.fuzzy_and = ltn.fuzzy_ops.And_Prod()
+        self.fuzzy_and = ltn.fuzzy_ops.AndProd()
         self.contains = Contains(smooth=smooth, beta=beta)
 
     def __call__(self, A: TrapzEvent, B: TrapzEvent, smooth: bool = None, beta: float = None
@@ -87,14 +87,14 @@ class After:
 
 class Starts:
     def __init__(self, op_start: basic_op.Start = None, op_end: basic_op.End = None,
-            equals: Equals = None, before: Before = None, fuzzy_and: ltn.fuzzy_ops.And_Prod = None,
+            equals: Equals = None, before: Before = None, fuzzy_and: ltn.fuzzy_ops.AndProd = None,
             smooth: bool = True) -> None:
         self.smooth = smooth
         self.op_start = basic_op.Start() if op_start is None else op_start
         self.op_end = basic_op.End() if op_end is None else op_end
         self.equals = Equals() if equals is None else equals
         self.before = Before() if before is None else before
-        self.fuzzy_and = ltn.fuzzy_ops.And_Prod() if fuzzy_and is None else fuzzy_and
+        self.fuzzy_and = ltn.fuzzy_ops.AndProd() if fuzzy_and is None else fuzzy_and
 
     def __call__(self, A: TrapzEvent, B: LeftFiniteTrapezoidalEvent, smooth: bool = None
             ) -> float | torch.Tensor:
@@ -111,7 +111,7 @@ class Starts:
 class During:
     def __init__(self, op_start: basic_op.Start = None, op_end: basic_op.End = None,
             equals: Equals = None, before: Before = None, after: After = None,
-            fuzzy_and: ltn.fuzzy_ops.And_Prod = None,
+            fuzzy_and: ltn.fuzzy_ops.AndProd = None,
             smooth: bool = True) -> None:
         self.smooth = smooth
         self.op_start = basic_op.Start() if op_start is None else op_start
@@ -119,7 +119,7 @@ class During:
         self.equals = Equals() if equals is None else equals
         self.before = Before() if before is None else before
         self.after = After() if after is None else after
-        self.fuzzy_and = ltn.fuzzy_ops.And_Prod() if fuzzy_and is None else fuzzy_and
+        self.fuzzy_and = ltn.fuzzy_ops.AndProd() if fuzzy_and is None else fuzzy_and
 
     def __call__(self, A: TrapzEvent, B: LeftFiniteTrapezoidalEvent | RightFiniteTrapezoidalEvent, 
                 smooth: bool = None) -> float | torch.Tensor:
@@ -138,14 +138,14 @@ class During:
 class Overlaps:
     def __init__(self, op_start: basic_op.Start = None, op_end: basic_op.End = None,
             equals: Equals = None, before: Before = None, 
-            fuzzy_and_aggreg: ltn.fuzzy_ops.Aggreg_Prod = None,
+            fuzzy_and_aggreg: ltn.fuzzy_ops.AggregPMean = None,
             smooth: bool = True) -> None:
         self.smooth = smooth
         self.op_start = basic_op.Start() if op_start is None else op_start
         self.op_end = basic_op.End() if op_end is None else op_end
         self.equals = Equals() if equals is None else equals
         self.before = Before() if before is None else before
-        self.fuzzy_and_aggreg = ltn.fuzzy_ops.Aggreg_Prod() if fuzzy_and_aggreg is None else fuzzy_and_aggreg
+        self.fuzzy_and_aggreg = ltn.fuzzy_ops.AggregPMean(p=2.) if fuzzy_and_aggreg is None else fuzzy_and_aggreg
 
     def __call__(self, A: RightFiniteTrapezoidalEvent, B: LeftFiniteTrapezoidalEvent, 
                 smooth: bool = None) -> float | torch.Tensor:

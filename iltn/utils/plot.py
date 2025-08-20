@@ -10,7 +10,10 @@ def plot_events(x_time: ArrayLike, events: list[Event], ax: matplotlib.axes.Axes
     if zorders is None:
         zorders = [1]*len(events)
     for (i,event) in enumerate(events):
-        ax.plot(x_time, event.mf(x_time, **mf_kwargs), c=c, label=event.label, zorder=zorders[i])
+        y_values = event.mf(x_time, **mf_kwargs)
+        if hasattr(y_values, 'detach'):
+            y_values = y_values.detach().numpy()
+        ax.plot(x_time, y_values, c=c, label=event.label, zorder=zorders[i])
         
 
 def set_size(

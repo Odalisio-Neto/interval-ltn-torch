@@ -6,5 +6,5 @@ build-backend = "setuptools.build_meta"
 name = "iltnTorch"
 version = "0.0.1"
 dependencies = [
-    "ltn",
+    "LTNtorch",
 ]

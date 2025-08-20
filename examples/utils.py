@@ -5,12 +5,12 @@ import iltn
 
 @dataclasses.dataclass
 class LTNOperators:
-    And: ltn.fuzzy_ops.And_Prod
-    Or: ltn.fuzzy_ops.Or_ProbSum
-    Not: ltn.fuzzy_ops.Not_Std
-    Implies: ltn.fuzzy_ops.Implies_Reichenbach
-    Exists: ltn.fuzzy_ops.Aggreg_pMean
-    Forall: ltn.fuzzy_ops.Aggreg_LogProd
+    And: ltn.fuzzy_ops.AndProd
+    Or: ltn.fuzzy_ops.OrProbSum
+    Not: ltn.fuzzy_ops.NotStandard
+    Implies: ltn.fuzzy_ops.ImpliesReichenbach
+    Exists: ltn.fuzzy_ops.AggregPMean
+    Forall: ltn.fuzzy_ops.AggregPMeanError
 
 @dataclasses.dataclass
 class TrapzOperators:
@@ -34,9 +34,9 @@ class TrapzRelations:
 
 def get_default_ltn_operators() -> LTNOperators:
     return LTNOperators(
-        And=ltn.fuzzy_ops.And_Prod(), Or=ltn.fuzzy_ops.Or_ProbSum(), Not=ltn.fuzzy_ops.Not_Std(),
-        Implies=ltn.fuzzy_ops.Implies_Reichenbach(), Exists=ltn.fuzzy_ops.Aggreg_pMean(p=2.),
-        Forall=ltn.fuzzy_ops.Aggreg_LogProd()
+        And=ltn.fuzzy_ops.AndProd(), Or=ltn.fuzzy_ops.OrProbSum(), Not=ltn.fuzzy_ops.NotStandard(),
+        Implies=ltn.fuzzy_ops.ImpliesReichenbach(), Exists=ltn.fuzzy_ops.AggregPMean(p=2.),
+        Forall=ltn.fuzzy_ops.AggregPMeanError(p=2.)
     )
 
 

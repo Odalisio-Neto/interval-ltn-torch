@@ -4,8 +4,12 @@ import numpy as np
 def softplus(x: float, beta: float = 1.) -> float:
     return (1/beta) * torch.nn.functional.softplus(beta*x)
 
-def zero_with_softplus_grads(x: float, beta: float = 1.) -> float:
-    return 0., torch.sigmoid(x*beta)
+def zero_with_softplus_grads(x, beta: float = 1.):
+    if isinstance(x, np.ndarray):
+        x = torch.tensor(x, dtype=torch.float32)
+    elif not isinstance(x, torch.Tensor):
+        x = torch.tensor(x, dtype=torch.float32)
+    return torch.sigmoid(x*beta)
 
 def softplus_inverse(x, name=None):
     """EXCERPT FROM TENSORFLOW PROBABILITIES
@@ -42,7 +46,11 @@ def softplus_inverse(x, name=None):
     # thus an `inf` in an unselected path results in `0*inf=nan`. We are careful
     # to overwrite `x` with ones only when we will never actually use this
     # value. Note that we use ones and not zeros since `log(expm1(0.)) = -inf`.
-    threshold = np.log(np.finfo(x.dtype).eps) + 2.
+    if not isinstance(x, torch.Tensor):
+        x = torch.tensor(x, dtype=torch.float32)
+    
+    numpy_dtype = x.clone().numpy().dtype
+    threshold = np.log(np.finfo(numpy_dtype).eps) + 2.
     is_too_small = x < np.exp(threshold)
     is_too_large = x > -threshold
     too_small_value = torch.log(x)

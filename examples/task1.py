@@ -4,6 +4,7 @@ import torch
 import torch.optim as optim
 from iltn import utils
 from iltn.events import TrapzEvent
+import utils as example_utils
 
 # Setting
 task_name = "task1"
@@ -11,7 +12,7 @@ trace_length = 15.5
 A = TrapzEvent(r"$A$", [0.5, 1.5, 3, 5], trainable=False, beta=1/trace_length)
 B = TrapzEvent(r"$B$", [1., 2, 2.5, 4.5], trainable=True, beta=1/trace_length)
 C = TrapzEvent(r"$C$", [11, 12, 14, 15], trainable=False, beta=1/trace_length)
-trainable_variables = [p for p in B.parameters() if p.requires_grad]
+trainable_variables = [p for p in B.trainable_variables if p.requires_grad]
 trapz_list = [A, B, C]
 
 def plot_function(name):
@@ -24,9 +25,9 @@ def plot_function(name):
 plot_function(f"{task_name}_init")
 
 # Constraints
-ltn_ops = utils.get_default_ltn_operators()
-trapz_ops = utils.get_default_trapz_operators()
-trapz_rel = utils.get_default_trapz_relations(trapz_ops, ltn_ops, beta=1/trace_length)
+ltn_ops = example_utils.get_default_ltn_operators()
+trapz_ops = example_utils.get_default_trapz_operators()
+trapz_rel = example_utils.get_default_trapz_relations(trapz_ops, ltn_ops, beta=1/trace_length)
 
 def constraints(training=True):
     cstr1 = trapz_rel.after(B, A, smooth=training)
@@ -41,13 +42,15 @@ optimizer = optim.Adam(trainable_variables, lr=0.1)
 for epoch in range(50):
     optimizer.zero_grad()
     for trapz in trapz_list:
-        trapz.start_optimized_step()
+        if trapz._trainable:
+            trapz.start_optimized_step()
 
     loss = -constraints(training=True)
     loss.backward()
 
     for trapz in trapz_list:
-        trapz.end_optimized_step()
+        if trapz._trainable:
+            trapz.end_optimized_step()
 
     optimizer.step()
 

@@ -3,7 +3,14 @@ import dataclasses
 
 import torch
 
-from iltn.events.trapz import TrapzEvent, LeftInfiniteTrapzEvent, RightInfiniteTrapzEvent 
+from iltn.events.trapz import TrapzEvent, LeftInfiniteTrapzEvent, RightInfiniteTrapzEvent
+
+def _to_tensor(value):
+    """Converte valor para tensor se necessário"""
+    if isinstance(value, torch.Tensor):
+        return value
+    else:
+        return torch.tensor(value, dtype=torch.float32) 
 
 @dataclasses.dataclass
 class Point:
@@ -83,8 +90,10 @@ def shoelace_formula(vertices: list[Point]) -> float | torch.Tensor:
     Args:
         vertices (list[Point]): Must be in counter-clockwise order
     """
-    xs = torch.stack([v.x for v in vertices])
-    ys = torch.stack([v.y for v in vertices])
+    x_vals = [v.x if isinstance(v.x, torch.Tensor) else torch.tensor(v.x, dtype=torch.float32) for v in vertices]
+    y_vals = [v.y if isinstance(v.y, torch.Tensor) else torch.tensor(v.y, dtype=torch.float32) for v in vertices]
+    xs = torch.stack(x_vals)
+    ys = torch.stack(y_vals)
     s1 = torch.sum(xs * torch.roll(ys, -1, dims=0))
     s2 = torch.sum(ys * torch.roll(xs, -1, dims=0))
     area = 0.5 * torch.abs(s1 - s2)
@@ -109,7 +118,7 @@ def find_intersection_vertices(A: TrapzEvent, B: TrapzEvent) -> list[tuple[float
     elif A.c == B.b:
         top_vertices = [Point((A.c + B.b) / 2, 1.)]
     else:
-        top_vertices = [Point(torch.min(A.c, B.c), 1.), Point(torch.max(A.b, B.b), 1.)] # order matters
+        top_vertices = [Point(torch.min(_to_tensor(A.c), _to_tensor(B.c)), 1.), Point(torch.max(_to_tensor(A.b), _to_tensor(B.b)), 1.)] # order matters
     # side vertices
     left_A = EdgeLine(A.b - A.a, A.a)
     right_A = EdgeLine(A.c - A.d, A.d)
