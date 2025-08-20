@@ -47,7 +47,11 @@ class Start:
 
     def __call__(self, A: LeftFiniteTrapezoidalEvent, delta: float = None) -> iltn.events.TrapzEvent:
         delta = self.delta if delta is None else delta
-        return self.fuzzify((A.a + A.b) / 2., core=0, support=torch.max(torch.tensor(delta), A.b - A.a), 
+        a_val = A.a if isinstance(A.a, torch.Tensor) else torch.tensor(A.a, dtype=torch.float32)
+        b_val = A.b if isinstance(A.b, torch.Tensor) else torch.tensor(A.b, dtype=torch.float32)
+        delta_tensor = torch.tensor(delta, dtype=torch.float32)
+        support = torch.max(delta_tensor, b_val - a_val)
+        return self.fuzzify((a_val + b_val) / 2., core=0, support=support, 
                             label=f"start_{A.label}", beta=A.beta)
 
 
@@ -58,5 +62,9 @@ class End:
 
     def __call__(self, A: RightFiniteTrapezoidalEvent, delta: float = None) -> iltn.events.TrapzEvent:
         delta = self.delta if delta is None else delta
-        return self.fuzzify((A.c + A.d) / 2., core=0, support=torch.max(torch.tensor(delta), A.d - A.c),
+        c_val = A.c if isinstance(A.c, torch.Tensor) else torch.tensor(A.c, dtype=torch.float32)
+        d_val = A.d if isinstance(A.d, torch.Tensor) else torch.tensor(A.d, dtype=torch.float32)
+        delta_tensor = torch.tensor(delta, dtype=torch.float32)
+        support = torch.max(delta_tensor, d_val - c_val)
+        return self.fuzzify((c_val + d_val) / 2., core=0, support=support,
                             label=f"end_{A.label}", beta=A.beta)

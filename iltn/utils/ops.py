@@ -69,7 +69,11 @@ def norm(x, axis=None, keepdims=None, name=None):
         return dy * (x / (y + 1e-19))
     return y, grad
 
-def smooth_equal(x: torch.Tensor, y: torch.Tensor, alpha=1.):
+def smooth_equal(x: torch.Tensor | float, y: torch.Tensor | float, alpha=1.):
+    if not isinstance(x, torch.Tensor):
+        x = torch.tensor(x, dtype=torch.float32)
+    if not isinstance(y, torch.Tensor):
+        y = torch.tensor(y, dtype=torch.float32)
     x = x.unsqueeze(-1) if x.dim() == 0 else x
     y = y.unsqueeze(-1) if y.dim() == 0 else y
     return torch.exp(-alpha*torch.norm(x-y,dim=0))

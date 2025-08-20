@@ -153,21 +153,21 @@ class Overlaps:
         if isinstance(A, LeftInfiniteTrapzEvent) and isinstance(B, RightInfiniteTrapzEvent):
             return self.before(self.op_start(B), self.op_end(A), smooth=smooth)
         elif isinstance(A, LeftInfiniteTrapzEvent):
-            return self.fuzzy_and_aggreg([
+            return self.fuzzy_and_aggreg(torch.stack([
                 self.before(self.op_start(B), self.op_end(A), smooth=smooth),
                 self.before(self.op_end(A), self.op_end(B), smooth=smooth)
-            ])
+            ]))
         elif isinstance(B, RightInfiniteTrapzEvent):
-            return self.fuzzy_and_aggreg([
+            return self.fuzzy_and_aggreg(torch.stack([
                 self.before(self.op_start(A), self.op_start(B), smooth=smooth),
                 self.before(self.op_start(B), self.op_end(A), smooth=smooth)
-            ])
+            ]))
         else:
-            return self.fuzzy_and_aggreg([
+            return self.fuzzy_and_aggreg(torch.stack([
                 self.before(self.op_start(A), self.op_start(B), smooth=smooth),
                 self.before(self.op_start(B), self.op_end(A), smooth=smooth),
                 self.before(self.op_end(A), self.op_end(B), smooth=smooth)
-            ])
+            ]))
 
 
 class BeforeAreaIntersection:
